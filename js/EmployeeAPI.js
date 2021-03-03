@@ -17,6 +17,9 @@ class EmployeeAPI {
     }
   }
 
+  /**
+   * @return {Array} - Returns the arrays of objects from the getData promise.
+   */
   generateEmployees(data) {
     return data.results;
   }
@@ -43,12 +46,68 @@ class EmployeeAPI {
     `;
       employeeGallery.insertAdjacentHTML('beforeend', employeeHTML);
     });
+
+    this.cardClickEvent();
   }
 
-  modalOutput() {}
+  /**
+   * Adds a click event to each employee card for their modal popup.
+   */
+  cardClickEvent() {
+    const employeeCards = document.querySelectorAll('.card');
+    employeeCards.forEach(card => {
+      card.addEventListener('click', e => {
+        this.modalOutput(card);
+        console.log('Clicked!', card);
+      });
+    });
+  }
+
+  modalOutput(employee) {
+    let fullName = employee.childNodes[3].firstElementChild.textContent;
+    fullName = fullName.split(' ');
+    const [firstName, lastName] = fullName;
+    let modalHTML = '';
+
+    console.log(this.employees);
+
+    //FIX EMPLOYEE PHONE FORMATTING!!!!!
+    //Address: Street name and number, state or countrym and postal code
+    this.employees.forEach(employee => {
+      if (employee.name.first === firstName && employee.name.last === lastName) {
+        modalHTML = `
+          <div class="modal-container">
+            <div class="modal">
+              <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
+              <div class="modal-info-container">
+                  <img class="modal-img" src="${employee.picture.large}" alt="${employee.name.first} ${employee.name.last}'s profile picture">
+                  <h3 id="name" class="modal-name cap">${employee.name.first} ${employee.name.last}</h3>
+                  <p class="modal-text">${employee.email}</p>
+                  <p class="modal-text cap">${employee.location.city}</p>
+                  <hr>
+                  <p class="modal-text">${employee.phone}</p>
+                  <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state}, ${employee.location.postcode} </p>
+                  <p class="modal-text">Birthday: 10/21/2015</p>
+            </div>
+          </div>`;
+      }
+    });
+    employeeGallery.insertAdjacentHTML('afterend', modalHTML);
+    this.addModalInteractions();
+  }
+
+  addModalInteractions() {
+    const modalContainer = document.querySelector('.modal-container');
+    modalContainer.addEventListener('click', e => {
+      console.log(e.target.id);
+      if (e.target.classList.contains('modal-container')) {
+        modalContainer.remove();
+      }
+    });
+  }
 
   /**
-   * Calls the "generateHTML" method on the response promise returned by the API
+   * Processes getData fetch promise.
    */
   outputEmployees() {
     this.getData().then(data => this.generateHTML(data));
