@@ -75,10 +75,15 @@ class EmployeeAPI {
 
     console.log(this.employees);
 
-    //FIX EMPLOYEE PHONE FORMATTING!!!!!
-    //Address: Street name and number, state or countrym and postal code
     this.employees.forEach(employee => {
       if (employee.name.first === firstName && employee.name.last === lastName) {
+        //Replaces special charactes in phone number with a empty string.
+        let employeePhone = employee.phone.replace(/[-.,()]/g, '');
+        employeePhone = `(${employeePhone.slice(0, 3)}) ${employeePhone.slice(3, 6)}-${employeePhone.slice(
+          6,
+          10,
+        )}`;
+        console.log(employeePhone);
         modalHTML = `
           <div class="modal-container">
             <div class="modal">
@@ -89,9 +94,9 @@ class EmployeeAPI {
                   <p class="modal-text">${employee.email}</p>
                   <p class="modal-text cap">${employee.location.city}</p>
                   <hr>
-                  <p class="modal-text">${employee.phone}</p>
+                  <p class="modal-text">${employeePhone}</p>
                   <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state}, ${employee.location.postcode} </p>
-                  <p class="modal-text">Birthday: 10/21/2015</p>
+                  <p class="modal-text">Birthday: ${employee.dob.date}</p>
             </div>
           </div>`;
       }
