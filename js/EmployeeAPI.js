@@ -63,6 +63,10 @@ class EmployeeAPI {
     });
   }
 
+  /**
+   * Outputs the modal HTML containing detailed information of the employee.
+   * @param {Element} employee - HTML Card element that contains employee's info .
+   */
   modalOutput(employee) {
     let fullName = employee.childNodes[3].firstElementChild.textContent;
     fullName = fullName.split(' ');
@@ -96,13 +100,20 @@ class EmployeeAPI {
     this.addModalInteractions();
   }
 
+  /**
+   * Adds interactios to the modal that supports closing and navigating.
+   */
   addModalInteractions() {
     const modalContainer = document.querySelector('.modal-container');
     modalContainer.addEventListener('click', e => {
       console.log(e.target.id);
       if (e.target.classList.contains('modal-container')) {
-        modalContainer.remove();
+        e.target.remove();
       }
+    });
+
+    modalContainer.childNodes[1].childNodes[1].addEventListener('click', e => {
+      modalContainer.remove();
     });
   }
 
