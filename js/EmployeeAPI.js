@@ -78,12 +78,16 @@ class EmployeeAPI {
     this.employees.forEach(employee => {
       if (employee.name.first === firstName && employee.name.last === lastName) {
         //Replaces special charactes in phone number with a empty string.
-        let employeePhone = employee.phone.replace(/[-.,()]/g, '');
+        let employeePhone = employee.phone.replace(/[-.,() ]/g, '');
         employeePhone = `(${employeePhone.slice(0, 3)}) ${employeePhone.slice(3, 6)}-${employeePhone.slice(
           6,
           10,
         )}`;
-        console.log(employeePhone);
+
+        //Replaces employee's date of birth with the following format MM/DD/YYYY.
+        let employeeDOB = employee.dob.date.replace(/[-:]/g, '');
+        employeeDOB = `${employeeDOB.slice(4, 6)}/${employeeDOB.slice(6, 8)}/${employeeDOB.slice(0, 4)}`;
+
         modalHTML = `
           <div class="modal-container">
             <div class="modal">
@@ -96,11 +100,12 @@ class EmployeeAPI {
                   <hr>
                   <p class="modal-text">${employeePhone}</p>
                   <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state}, ${employee.location.postcode} </p>
-                  <p class="modal-text">Birthday: ${employee.dob.date}</p>
+                  <p class="modal-text">Birthday: ${employeeDOB}</p>
             </div>
           </div>`;
       }
     });
+
     employeeGallery.insertAdjacentHTML('afterend', modalHTML);
     this.addModalInteractions();
   }
