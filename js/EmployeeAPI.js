@@ -18,20 +18,60 @@ class EmployeeAPI {
   }
 
   /**
-   * @return {Array} - Returns the arrays of objects from the getData promise.
+   * Sets the employees to the 12 randomly gnerated employee data received from the API.
+   * @param {Promise} data - Promise employee data returned from the fetch .thn.
    */
   generateEmployees(data) {
-    return data.results;
+    this.employees = data.results;
   }
 
   /**
-   * Outputs the selected data from the API to the screen.
-   * @param {Array} data - An array of objects containing user's data.
-   * @return {Array} - An array of employee objects.
+   * Outputs the employee card data from the API to the screen.
    */
-  generateHTML(data) {
-    this.employees = data.results;
+  outputEmployees(employees) {
+    employeeGallery.innerHTML = '';
+    this.generateEmployeeCard(employees);
+    this.cardClickEvent();
+  }
+
+  /**
+   * Adds a click event to each employee card for their modal popup.
+   */
+  cardClickEvent() {
+    const employeeCards = document.querySelectorAll('.card');
+    employeeCards.forEach(card => {
+      card.addEventListener('click', e => {
+        this.modalOutput(card);
+      });
+    });
+  }
+
+  /**
+   * Outputs the modal HTML containing detailed information of the employee.
+   * @param {Element} employee - HTML Card element that contains employee's info .
+   */
+  modalOutput(employee) {
+    let fullName = employee.childNodes[3].firstElementChild.textContent;
+    fullName = fullName.split(' ');
+    const [firstName, lastName] = fullName;
+    let modalContent = '';
+
     this.employees.forEach(employee => {
+      if (employee.name.first === firstName && employee.name.last === lastName) {
+        modalContent = this.modalHTML(employee);
+      }
+    });
+
+    employeeGallery.insertAdjacentHTML('afterend', modalContent);
+    this.addModalInteractions();
+  }
+
+  /**
+   * Generates and outputs the employee card HTML.
+   * @param {Object} employee - Employee data object.
+   */
+  generateEmployeeCard(employees) {
+    employees.forEach(employee => {
       let employeeHTML = `
       <div class="card">
           <div class="card-img-container">
@@ -46,49 +86,26 @@ class EmployeeAPI {
     `;
       employeeGallery.insertAdjacentHTML('beforeend', employeeHTML);
     });
-
-    this.cardClickEvent();
   }
 
   /**
-   * Adds a click event to each employee card for their modal popup.
+   * Formats employee's phone and DOB and return modal content HTML.
+   * @param {Object} employee - Employee data object.
+   * @return {String} - Modal content HTML.
    */
-  cardClickEvent() {
-    const employeeCards = document.querySelectorAll('.card');
-    employeeCards.forEach(card => {
-      card.addEventListener('click', e => {
-        this.modalOutput(card);
-        console.log('Clicked!', card);
-      });
-    });
-  }
+  modalHTML(employee) {
+    //Replaces special charactes in phone number with a empty string.
+    let employeePhone = employee.phone.replace(/[-.,() ]/g, '');
+    employeePhone = `(${employeePhone.slice(0, 3)}) ${employeePhone.slice(3, 6)}-${employeePhone.slice(
+      6,
+      10,
+    )}`;
 
-  /**
-   * Outputs the modal HTML containing detailed information of the employee.
-   * @param {Element} employee - HTML Card element that contains employee's info .
-   */
-  modalOutput(employee) {
-    let fullName = employee.childNodes[3].firstElementChild.textContent;
-    fullName = fullName.split(' ');
-    const [firstName, lastName] = fullName;
-    let modalHTML = '';
+    //Replaces employee's date of birth with the following format MM/DD/YYYY.
+    let employeeDOB = employee.dob.date.replace(/[-:]/g, '');
+    employeeDOB = `${employeeDOB.slice(4, 6)}/${employeeDOB.slice(6, 8)}/${employeeDOB.slice(0, 4)}`;
 
-    console.log(this.employees);
-
-    this.employees.forEach(employee => {
-      if (employee.name.first === firstName && employee.name.last === lastName) {
-        //Replaces special charactes in phone number with a empty string.
-        let employeePhone = employee.phone.replace(/[-.,() ]/g, '');
-        employeePhone = `(${employeePhone.slice(0, 3)}) ${employeePhone.slice(3, 6)}-${employeePhone.slice(
-          6,
-          10,
-        )}`;
-
-        //Replaces employee's date of birth with the following format MM/DD/YYYY.
-        let employeeDOB = employee.dob.date.replace(/[-:]/g, '');
-        employeeDOB = `${employeeDOB.slice(4, 6)}/${employeeDOB.slice(6, 8)}/${employeeDOB.slice(0, 4)}`;
-
-        modalHTML = `
+    const modalHTML = `
           <div class="modal-container">
             <div class="modal">
               <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
@@ -103,11 +120,8 @@ class EmployeeAPI {
                   <p class="modal-text">Birthday: ${employeeDOB}</p>
             </div>
           </div>`;
-      }
-    });
 
-    employeeGallery.insertAdjacentHTML('afterend', modalHTML);
-    this.addModalInteractions();
+    return modalHTML;
   }
 
   /**
@@ -115,22 +129,84 @@ class EmployeeAPI {
    */
   addModalInteractions() {
     const modalContainer = document.querySelector('.modal-container');
+    this.removeModalContainer(modalContainer);
+  }
+
+  /**
+   * Removes the popup modal on Escape keypress, close button click, or any click
+   * outside of the content container.
+   * @param {Element} modalContainer
+   */
+  removeModalContainer(modalContainer) {
+    const removeModalContainer = function () {
+      modalContainer.remove();
+    };
     modalContainer.addEventListener('click', e => {
-      console.log(e.target.id);
       if (e.target.classList.contains('modal-container')) {
-        e.target.remove();
+        removeModalContainer();
       }
     });
 
-    modalContainer.childNodes[1].childNodes[1].addEventListener('click', e => {
-      modalContainer.remove();
+    modalContainer.childNodes[1].childNodes[1].addEventListener('click', removeModalContainer);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        removeModalContainer();
+      }
     });
   }
 
   /**
    * Processes getData fetch promise.
    */
-  outputEmployees() {
-    this.getData().then(data => this.generateHTML(data));
+  processEmployees() {
+    this.getData()
+      .then(data => this.generateEmployees(data))
+      .then(() => {
+        this.outputEmployees(this.employees);
+      })
+      .then(() => this.search());
+  }
+
+  /**
+   * Calls addSearchInput and adds functionality to the search.
+   */
+  search() {
+    this.addSearchInput();
+
+    const searchInput = document.querySelector('#search-input');
+    const searchForm = document.querySelector('#search');
+
+    searchForm.addEventListener('submit', e => {
+      e.preventDefault();
+    });
+
+    searchInput.addEventListener('input', e => {
+      const searchValLower = e.target.value.toLowerCase();
+      const searchedEmployees = [];
+
+      this.employees.forEach(employee => {
+        const employeefName = employee.name.first.toLowerCase();
+        const employeelName = employee.name.last.toLowerCase();
+
+        if (employeefName.includes(searchValLower) || employeelName.includes(searchValLower)) {
+          searchedEmployees.push(employee);
+        }
+      });
+      this.outputEmployees(searchedEmployees);
+    });
+  }
+
+  /**
+   * Generates search input HTML and outputs it to the screen.
+   */
+  addSearchInput() {
+    const searchContainer = document.querySelector('.search-container');
+    const searchHTML = `
+    <form id="search" action="#" method="get">
+      <input type="search" id="search-input" class="search-input" placeholder="Search...">
+      <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
+    </form>`;
+
+    searchContainer.innerHTML = searchHTML;
   }
 }
