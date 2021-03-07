@@ -1,7 +1,8 @@
-class EmployeeAPI {
+class EmployeesAPI {
   constructor(url) {
     this.url = url;
     this.employees = null;
+    this.modalIndex = -1;
   }
 
   /**
@@ -41,24 +42,25 @@ class EmployeeAPI {
     const employeeCards = document.querySelectorAll('.card');
     employeeCards.forEach(card => {
       card.addEventListener('click', e => {
-        this.modalOutput(card);
+        this.outputModal(card);
       });
     });
   }
 
   /**
    * Outputs the modal HTML containing detailed information of the employee.
-   * @param {Element} employee - HTML Card element that contains employee's info .
+   * @param {Element} employee - HTML Card element that contains employee's info.
    */
-  modalOutput(employee) {
+  outputModal(employee) {
+    let modalContent = '';
     let fullName = employee.childNodes[3].firstElementChild.textContent;
     fullName = fullName.split(' ');
     const [firstName, lastName] = fullName;
-    let modalContent = '';
 
-    this.employees.forEach(employee => {
+    this.employees.forEach((employee, index) => {
       if (employee.name.first === firstName && employee.name.last === lastName) {
         modalContent = this.modalHTML(employee);
+        this.modalIndex = index;
       }
     });
 
@@ -118,18 +120,29 @@ class EmployeeAPI {
                   <p class="modal-text">${employeePhone}</p>
                   <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state}, ${employee.location.postcode} </p>
                   <p class="modal-text">Birthday: ${employeeDOB}</p>
+              </div>
             </div>
-          </div>`;
+
+             <div class="modal-btn-container">
+              <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
+              <button type="button" id="modal-next" class="modal-next btn">Next</button>
+             </div>
+
+          </div>
+          
+          `;
 
     return modalHTML;
   }
 
   /**
    * Adds interactios to the modal that supports closing and navigating.
+   * @param {Number} index - The index of the current employee modal in the employees array.
    */
-  addModalInteractions() {
+  addModalInteractions(index) {
     const modalContainer = document.querySelector('.modal-container');
-    this.removeModalContainer(modalContainer);
+    this.removeModalContainerInteraction(modalContainer);
+    this.modalNextPrevInteraction(index);
   }
 
   /**
@@ -137,10 +150,11 @@ class EmployeeAPI {
    * outside of the content container.
    * @param {Element} modalContainer
    */
-  removeModalContainer(modalContainer) {
+  removeModalContainerInteraction(modalContainer) {
     const removeModalContainer = function () {
       modalContainer.remove();
     };
+
     modalContainer.addEventListener('click', e => {
       if (e.target.classList.contains('modal-container')) {
         removeModalContainer();
@@ -153,6 +167,50 @@ class EmployeeAPI {
         removeModalContainer();
       }
     });
+  }
+
+  //FIX DOCUMENTATION LATER!!!!
+  /**
+   * Modal navigation functionality.
+   */
+  modalNextPrevInteraction(index) {
+    const nextEmployeeBtn = document.querySelector('#modal-next');
+    const prevEmployeeBtn = document.querySelector('#modal-prev');
+
+    nextEmployeeBtn.addEventListener('click', () => {
+      this.showAdjacentEmployeeModal('next');
+    });
+
+    prevEmployeeBtn.addEventListener('click', () => {
+      this.showAdjacentEmployeeModal('prev');
+    });
+  }
+
+  showAdjacentEmployeeModal(prevOrNext) {
+    const currentModal = document.querySelector('.modal-container');
+    let newModalHTML = '';
+
+    if (prevOrNext === 'next') {
+      if (this.modalIndex < this.employees.length - 1) {
+        currentModal.remove();
+        newModalHTML = this.modalHTML(this.employees[this.modalIndex + 1]);
+        this.modalIndex += 1;
+      } else {
+        alert('Sorry, no more employees to display!');
+      }
+    } else if (prevOrNext === 'prev') {
+      if (this.modalIndex > 0) {
+        currentModal.remove();
+
+        newModalHTML = this.modalHTML(this.employees[this.modalIndex - 1]);
+        this.modalIndex -= 1;
+      } else {
+        alert('Sorry no more employees to display!');
+      }
+    }
+
+    employeeGallery.insertAdjacentHTML('beforeend', newModalHTML);
+    this.addModalInteractions();
   }
 
   /**
@@ -187,8 +245,9 @@ class EmployeeAPI {
       this.employees.forEach(employee => {
         const employeefName = employee.name.first.toLowerCase();
         const employeelName = employee.name.last.toLowerCase();
+        const employeefullname = employeefName + ' ' + employeelName;
 
-        if (employeefName.includes(searchValLower) || employeelName.includes(searchValLower)) {
+        if (employeefullname.includes(searchValLower)) {
           searchedEmployees.push(employee);
         }
       });
